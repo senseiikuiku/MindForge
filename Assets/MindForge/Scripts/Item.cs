@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -16,7 +16,8 @@ public class Item : MonoBehaviour
 
     public void DisableShadows()
     {
-
+        // Tắt đổ bóng
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
     }
     public void DisablePhysics()
     {

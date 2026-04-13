@@ -4,6 +4,13 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Item : MonoBehaviour
 {
+    [Header(" Data")]
+    [SerializeField] private EItemName itemName;
+    public EItemName ItemName => itemName;
+
+    private ItemSpot spot;
+    public ItemSpot Spot => spot;
+
     [Header("Elements")]
     [SerializeField] private Renderer renderer;
     [SerializeField] private Collider collider;
@@ -12,6 +19,11 @@ public class Item : MonoBehaviour
     private void Awake()
     {
         baseMaterial = renderer.material;
+    }
+
+    public void AssignSpot(ItemSpot spot)
+    {
+        this.spot = spot; // Gán vị trí cho item để sau này có thể biết được item đang ở đâu
     }
 
     public void DisableShadows()

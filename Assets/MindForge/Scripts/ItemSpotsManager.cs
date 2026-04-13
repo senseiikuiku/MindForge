@@ -18,6 +18,10 @@ public class ItemSpotsManager : MonoBehaviour
     // Từ điển lưu trữ dữ liệu các vật phẩm đã được nhặt, phân loại theo Tên (Enum)
     private Dictionary<EItemName, ItemMergeData> itemMergeDataDictionary = new Dictionary<EItemName, ItemMergeData>();
 
+    [Header("Animation Settings")]
+    [SerializeField] private float animationDuration = 0.2f;
+    [SerializeField] private LeanTweenType animaitonEasing;
+
     private void Awake()
     {
         InputManager.itemCliked += OnItemClicked;
@@ -117,9 +121,14 @@ public class ItemSpotsManager : MonoBehaviour
         targetSpot.Populate(item);
 
         // Reset local position and scale
-        item.transform.localPosition = itemLocalPositionOnSpot;
-        item.transform.localScale = itemLocalScaleOnSpot;
-        item.transform.localRotation = Quaternion.identity;
+        LeanTween.moveLocal(item.gameObject, itemLocalPositionOnSpot, animationDuration)
+            .setEase(animaitonEasing);
+
+        LeanTween.scale(item.gameObject, itemLocalScaleOnSpot, animationDuration)
+            .setEase(animaitonEasing);
+
+        LeanTween.rotateLocal(item.gameObject, Vector3.zero, animationDuration)
+            .setOnComplete(completeCallBack);
 
         // Disable shadows 
         item.DisableShadows();
@@ -127,14 +136,13 @@ public class ItemSpotsManager : MonoBehaviour
         // Disable physics
         item.DisablePhysics();
 
-        completeCallBack?.Invoke();
-
-        //HandleItemReachedSpot(item, checkForMerge);
     }
 
     // Hàm xử lý khi món đồ đã được đặt vào một ô nào đó trên khay, kiểm tra xem có thể gộp với những món đồ cùng loại khác không, nếu có thì gộp, nếu không thì kiểm tra thua cuộc
     private void HandleItemReachedSpot(Item item, bool checkForMerge = true)
     {
+        item.Spot.BumpDown(); // Hiệu ứng nhún nhẹ khi món đồ đã vào vị trí
+
         if (!checkForMerge)
         {
             return;
@@ -165,13 +173,23 @@ public class ItemSpotsManager : MonoBehaviour
             Destroy(items[i].gameObject);
         }
 
-        MoveAllItemsToTheLeft();
+        if (itemMergeDataDictionary.Count <= 0)
+        {
+            isBusy = false;
+        }
+        else
+        {
+            // Di chuyển tất cả các món đồ còn lại trên khay sang bên trái hết
+            MoveAllItemsToTheLeft(HandleAllItemsMovedToTheLeft);
+        }
 
         //isBusy = false; // Mở khóa để người chơi có thể click tiếp
     }
 
-    private void MoveAllItemsToTheLeft()
+    private void MoveAllItemsToTheLeft(Action completeCallback)
     {
+        bool callbackTriggered = false; // Biến cờ để theo dõi xem callback đã được gọi chưa
+
         // Duyệt từ trái sang phải, nếu ô nào có món đồ thì đẩy nó sang bên cạnh bên trái, cứ thế tiếp tục đến hết mảng
         for (int i = 3; i < spots.Length; i++)
         {
@@ -200,11 +218,19 @@ public class ItemSpotsManager : MonoBehaviour
             // Xóa món đồ khỏi ô hiện tại
             spot.Clear();
 
+            completeCallback += () => HandleItemReachedSpot(item, false);
+
             // Di chuyển món đồ sang ô bên cạnh
-            MoveItemToSpot(item, targetSpot, () => HandleItemReachedSpot(item, false));
+            MoveItemToSpot(item, targetSpot, completeCallback);
+
+            callbackTriggered = true;
         }
 
-        HandleAllItemsMovedToTheLeft();
+        // Nếu sau khi đã cố gắng đẩy tất cả các món đồ sang trái hết mức có thể mà callback vẫn chưa được gọi, thì gọi nó ngay bây giờ
+        if (!callbackTriggered)
+        {
+            completeCallback?.Invoke();
+        }
     }
 
     private void HandleAllItemsMovedToTheLeft()
@@ -272,6 +298,7 @@ public class ItemSpotsManager : MonoBehaviour
     // Hàm xử lý khi món đồ đã được đặt vào một ô nào đó trên khay, kiểm tra xem có thua cuộc không
     private void HandleFirstItemReachedSpot(Item item)
     {
+        item.Spot.BumpDown(); // Hiệu ứng nhún nhẹ khi món đồ đã vào vị trí
         CheckForGameOver();
     }
 

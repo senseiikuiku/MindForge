@@ -835,11 +835,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.44590998
+      value: 1.43
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.166
+      value: 0.61
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1511,6 +1511,8 @@ MonoBehaviour:
   itemLocalPositionOnSpot: {x: 0, y: 0.09, z: 0}
   itemLocalScaleOnSpot: {x: 0.25, y: 0.25, z: 0.25}
   isBusy: 0
+  animationDuration: 0.2
+  animaitonEasing: 7
 --- !u!4 &1918577124
 Transform:
   m_ObjectHideFlags: 0
@@ -1786,11 +1788,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.44590998
+      value: 1.43
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.166
+      value: 0.61
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1848,11 +1850,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.44590998
+      value: 1.43
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.166
+      value: 0.61
       objectReference: {fileID: 0}
     - target: {fileID: 7434355973574369065, guid: 11a87652701b97740aa3139c56438aec, type: 3}
       propertyPath: m_LocalPosition.z

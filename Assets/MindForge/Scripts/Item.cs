@@ -5,10 +5,10 @@ using UnityEngine;
 public class Item : MonoBehaviour
 {
     [Header(" Data")]
-    [SerializeField] private EItemName itemName;
+    [SerializeField] private EItemName itemName; // Loại item này là loại nào
     public EItemName ItemName => itemName;
 
-    private ItemSpot spot;
+    private ItemSpot spot; // Item này đang ở vị trí nào
     public ItemSpot Spot => spot;
 
     [Header("Elements")]
@@ -21,6 +21,7 @@ public class Item : MonoBehaviour
         baseMaterial = renderer.material;
     }
 
+    // Hàm xử lý khi item được gán vào một vị trí nào đó
     public void AssignSpot(ItemSpot spot)
     {
         this.spot = spot; // Gán vị trí cho item để sau này có thể biết được item đang ở đâu
@@ -46,5 +47,4 @@ public class Item : MonoBehaviour
     {
         renderer.materials = new Material[] { baseMaterial };
     }
-
 }

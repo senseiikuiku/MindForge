@@ -15,12 +15,16 @@ public class ItemSpotsManager : MonoBehaviour
     public bool isBusy;// Biến khóa, ngăn người chơi click liên tục khi đang xử lý di chuyển
 
     [Header("Data")]
-    // Từ điển lưu trữ dữ liệu các vật phẩm đã được nhặt, phân loại theo Tên (Enum)
+    // Dictionary lưu trữ dữ liệu các món đồ cùng loại đang có trên khay, để dễ dàng xử lý logic gộp chúng lại với nhau
     private Dictionary<EItemName, ItemMergeData> itemMergeDataDictionary = new Dictionary<EItemName, ItemMergeData>();
 
     [Header("Animation Settings")]
     [SerializeField] private float animationDuration = 0.2f;
-    [SerializeField] private LeanTweenType animaitonEasing;
+    [SerializeField] private LeanTweenType animationEasing;
+
+    [Header("Actions")]
+    public static Action<List<Item>> mergeStarted;
+
 
     private void Awake()
     {
@@ -35,76 +39,78 @@ public class ItemSpotsManager : MonoBehaviour
 
     private void OnItemClicked(Item item)
     {
+        // 1. Kiểm tra đang bận xử lý không
         if (isBusy)
         {
             Debug.Log("ItemSpotsManager is busy. Please wait.");
             return;
         }
 
+        // 2. Kiểm tra còn ô trống không
         if (!IsFreeSpotAvailable())
         {
             Debug.Log("No free item spot available.");
             return;
         }
 
-        // we've now busy
+        // 3. Khóa lại và xử lý
         isBusy = true;
-
         HandleItemClicked(item);
     }
 
     private void HandleItemClicked(Item item)
     {
-        // Nếu loại vật phẩm này ĐÃ CÓ trên khay (đã có trong Dictionary)
+        // Nếu loại item này ĐÃ CÓ trên khay
         if (itemMergeDataDictionary.ContainsKey(item.ItemName))
-            HandleItemMergeDataFound(item); // Xử lý logic chèn vào cạnh nhau
+            HandleItemMergeDataFound(item);  // Đặt cạnh item cùng loại
         else
-            MoveItemToFirstFreeSpot(item); // Nếu chưa có, cứ bỏ vào ô trống đầu tiên
+            MoveItemToFirstFreeSpot(item);   // Đặt vào ô trống đầu tiên
     }
 
-    // Hàm xử lý khi đã tìm thấy 'ItemMergeData' cho món đồ này trong Dictionary, tức là đã có món đồ cùng loại trên khay
+    // Hàm xử lý khi đã tìm thấy 'ItemMergeData' cho item này trong Dictionary
     private void HandleItemMergeDataFound(Item item)
     {
-        // Tìm xem 'Vị trí lý tưởng' cho món đồ này là ô nào
+        // Tìm xem 'Vị trí lý tưởng' cho item này là ô nào
         ItemSpot targetSpot = GetIdealSpotFor(item);
 
-        // Cập nhật dữ liệu vào Dictionary (thêm món đồ này vào danh sách cùng loại)
+        // Cập nhật dữ liệu vào Dictionary (thêm item này vào danh sách cùng loại)
         itemMergeDataDictionary[item.ItemName].Add(item);
 
         // Thử đưa món đồ vào ô đó
         TryMoveItemToIdealSpot(item, targetSpot);
     }
 
-    // Hàm tìm 'Vị trí lý tưởng' cho món đồ này, tức là ô đứng ngay cạnh món đồ cùng loại cuối cùng trên khay
+    // Hàm tìm 'Vị trí lý tưởng' cho item này
     private ItemSpot GetIdealSpotFor(Item item)
     {
-        // Lấy danh sách các món đồ cùng loại đang có trên khay
+        // 1. Lấy danh sách items cùng loại đang có trên khay
         List<Item> items = itemMergeDataDictionary[item.ItemName].items;
 
-        // Tạo danh sách các Ô (Spots) mà những món đồ đó đang đứng
+        // 2. Tạo danh sách các ô mà items đó đang đứng
         List<ItemSpot> itemSpots = new List<ItemSpot>();
         for (int i = 0; i < items.Count; i++)
         {
             itemSpots.Add(items[i].Spot);
         }
 
-        // Sắp xếp các ô này theo thứ tự dựa trên Index trong Unity
+        // 3. Sắp xếp các ô theo index (từ phải sang trái)
         if (itemSpots.Count >= 2)
         {
-            itemSpots.Sort((a, b) => b.transform.GetSiblingIndex().CompareTo(a.transform.GetSiblingIndex()));
+            itemSpots.Sort((a, b) =>
+                b.transform.GetSiblingIndex().CompareTo(a.transform.GetSiblingIndex())
+            );
         }
 
-        // Lấy Index của ô cuối cùng trong nhóm đồ cùng loại, rồi cộng thêm 1
-        // Mục tiêu: Đứng ngay sát bên phải món đồ cùng loại cuối cùng
+        // 4. Lấy ô bên phải của item cuối cùng trong nhóm
         int idealSpotIndex = itemSpots[0].transform.GetSiblingIndex() + 1;
 
-        return spots[idealSpotIndex]; // Trả về ô mục tiêu
+        return spots[idealSpotIndex];
     }
 
     private void TryMoveItemToIdealSpot(Item item, ItemSpot idealSpot)
     {
         // Nếu ô lý tưởng đã có món đồ khác loại đang đứng
-        if (!idealSpot.IsEmplty())
+        if (!idealSpot.IsEmpty())
         {
             // Đẩy món đồ đó sang một bên
             HandleIdealSpotFull(item, idealSpot);
@@ -115,27 +121,26 @@ public class ItemSpotsManager : MonoBehaviour
         MoveItemToSpot(item, idealSpot, () => HandleItemReachedSpot(item));
     }
 
-    private void MoveItemToSpot(Item item, ItemSpot targetSpot, Action completeCallBack)
+    private void MoveItemToSpot(Item item, ItemSpot targetSpot, Action completeCallback)
     {
-        // Đặt item vào vị trí trống
+        // 1. Đặt item vào ô
         targetSpot.Populate(item);
 
-        // Reset local position and scale
+        // 2. Animation di chuyển vị trí (dùng LeanTween)
         LeanTween.moveLocal(item.gameObject, itemLocalPositionOnSpot, animationDuration)
-            .setEase(animaitonEasing);
+            .setEase(animationEasing);
 
+        // 3. Animation scale
         LeanTween.scale(item.gameObject, itemLocalScaleOnSpot, animationDuration)
-            .setEase(animaitonEasing);
+            .setEase(animationEasing);
 
+        // 4. Animation xoay về 0
         LeanTween.rotateLocal(item.gameObject, Vector3.zero, animationDuration)
-            .setOnComplete(completeCallBack);
+            .setOnComplete(completeCallback);  // Callback khi hoàn thành
 
-        // Disable shadows 
+        // 5. Tắt shadows và physics
         item.DisableShadows();
-
-        // Disable physics
         item.DisablePhysics();
-
     }
 
     // Hàm xử lý khi món đồ đã được đặt vào một ô nào đó trên khay, kiểm tra xem có thể gộp với những món đồ cùng loại khác không, nếu có thì gộp, nếu không thì kiểm tra thua cuộc
@@ -145,16 +150,17 @@ public class ItemSpotsManager : MonoBehaviour
 
         if (!checkForMerge)
         {
-            return;
+            return;  // Không kiểm tra merge (dùng khi đang sắp xếp lại)
         }
 
+        // Kiểm tra có đủ 3 items cùng loại không
         if (itemMergeDataDictionary[item.ItemName].CanMergeItems())
         {
             MergeItems(itemMergeDataDictionary[item.ItemName]);
         }
         else
         {
-            CheckForGameOver();
+            CheckForGameOver();  // Kiểm tra thua cuộc
         }
     }
 
@@ -163,75 +169,92 @@ public class ItemSpotsManager : MonoBehaviour
     {
         List<Item> items = itemMergeData.items;
 
-        // Xóa các item merge data từ Dictionary
+        // 1. Xóa khỏi Dictionary
         itemMergeDataDictionary.Remove(itemMergeData.itemName);
 
+        // 2. Xóa khỏi khay (chỉ Clear, chưa Destroy)
         for (int i = 0; i < items.Count; i++)
         {
-            // Xóa các item trên khay
             items[i].Spot.Clear();
-            Destroy(items[i].gameObject);
         }
 
-        if (itemMergeDataDictionary.Count <= 0)
-        {
-            isBusy = false;
-        }
-        else
-        {
-            // Di chuyển tất cả các món đồ còn lại trên khay sang bên trái hết
-            MoveAllItemsToTheLeft(HandleAllItemsMovedToTheLeft);
-        }
+        // 3. Bắn event cho MergeManager để làm hiệu ứng
+        mergeStarted?.Invoke(items);
 
-        //isBusy = false; // Mở khóa để người chơi có thể click tiếp
+        // 4. Đẩy các items còn lại sang trái
+        MoveAllItemsToTheLeft(HandleAllItemsMovedToTheLeft);
     }
 
     private void MoveAllItemsToTheLeft(Action completeCallback)
     {
-        bool callbackTriggered = false; // Biến cờ để theo dõi xem callback đã được gọi chưa
-
-        // Duyệt từ trái sang phải, nếu ô nào có món đồ thì đẩy nó sang bên cạnh bên trái, cứ thế tiếp tục đến hết mảng
+        // Duyệt từ index 3 đến hết
         for (int i = 3; i < spots.Length; i++)
         {
-            // Nếu ô này có món đồ, thì đẩy nó sang bên cạnh bên trái
             ItemSpot spot = spots[i];
 
-            if (spot.IsEmplty())
-            {
-                continue;
-            }
+            if (spot.IsEmpty()) continue;
 
-            // Nếu đã đi đến đầu mảng mà vẫn chưa tìm được ô trống, tức là không thể đẩy thêm nữa, thì dừng lại
             Item item = spot.Item;
+            ItemSpot targetSpot = spots[i - 3];  // Đẩy sang trái 3 ô
 
-            // Di chuyển món đồ sang ô bên cạnh
-            ItemSpot targetSpot = spots[i - 3];
-
-            // Nếu ô bên cạnh đã có món đồ khác loại đang đứng, thì dừng lại, không đẩy nữa
-            if (!targetSpot.IsEmplty())
+            // Nếu ô bên trái đã có item khác → Lỗi logic
+            if (!targetSpot.IsEmpty())
             {
                 Debug.LogWarning($"{targetSpot.name} is Full");
                 isBusy = false;
                 return;
             }
 
-            // Xóa món đồ khỏi ô hiện tại
+            // Xóa khỏi ô hiện tại
             spot.Clear();
 
+            // ⚠️ BUG: completeCallback bị gọi nhiều lần!
             completeCallback += () => HandleItemReachedSpot(item, false);
 
-            // Di chuyển món đồ sang ô bên cạnh
+            // Di chuyển item
             MoveItemToSpot(item, targetSpot, completeCallback);
-
-            callbackTriggered = true;
-        }
-
-        // Nếu sau khi đã cố gắng đẩy tất cả các món đồ sang trái hết mức có thể mà callback vẫn chưa được gọi, thì gọi nó ngay bây giờ
-        if (!callbackTriggered)
-        {
-            completeCallback?.Invoke();
         }
     }
+
+    //private void MoveAllItemsToTheLeft(Action completeCallback)
+    //{
+    //    int itemsToMove = 0;
+    //    int itemsMoved = 0;
+
+    //    // Đếm số items cần di chuyển
+    //    for (int i = 3; i < spots.Length; i++)
+    //    {
+    //        if (!spots[i].IsEmpty()) itemsToMove++;
+    //    }
+
+    //    for (int i = 3; i < spots.Length; i++)
+    //    {
+    //        ItemSpot spot = spots[i];
+    //        if (spot.IsEmpty()) continue;
+
+    //        Item item = spot.Item;
+    //        ItemSpot targetSpot = spots[i - 3];
+    //        spot.Clear();
+
+    //        MoveItemToSpot(item, targetSpot, () =>
+    //        {
+    //            HandleItemReachedSpot(item, false);
+    //            itemsMoved++;
+
+    //            // Chỉ gọi callback khi tất cả items đã di chuyển xong
+    //            if (itemsMoved == itemsToMove)
+    //            {
+    //                completeCallback?.Invoke();
+    //            }
+    //        });
+    //    }
+
+    //    // Nếu không có item nào cần di chuyển
+    //    if (itemsToMove == 0)
+    //    {
+    //        completeCallback?.Invoke();
+    //    }
+    //}
 
     private void HandleAllItemsMovedToTheLeft()
     {
@@ -245,43 +268,41 @@ public class ItemSpotsManager : MonoBehaviour
 
     private void MoveAllItemsToTheRightFrom(ItemSpot idealSpot, Item itemToPlace)
     {
+        // Lấy index của ô lý tưởng
         int spotIndex = idealSpot.transform.GetSiblingIndex();
 
+        // Duyệt từ phải sang trái (cuối mảng về vị trí lý tưởng)
         for (int i = spots.Length - 2; i >= spotIndex; i--)
         {
             ItemSpot spot = spots[i];
 
-            if (spot.IsEmplty())
-            {
-                continue;
-            }
+            if (spot.IsEmpty()) continue;  // Bỏ qua ô trống
 
-            // Nếu đã đi đến cuối mảng mà vẫn chưa tìm được ô trống, tức là không thể đẩy thêm nữa, thì dừng lại
             Item item = spot.Item;
+            spot.Clear();  // Xóa khỏi ô hiện tại
 
-            spot.Clear();
-
-            // Đẩy món đồ này sang một bên (sang phải)
+            // Đẩy sang phải 1 ô
             ItemSpot targetSpot = spots[i + 1];
 
-            if (!targetSpot.IsEmplty())
+            if (!targetSpot.IsEmpty())
             {
-                Debug.LogError("ERROR, this should not happen, we should have already checked for free spot before trying to move items");
+                Debug.LogError("ERROR: Target spot should be empty!");
                 isBusy = false;
                 return;
             }
 
-            // Di chuyển món đồ sang ô bên cạnh
+            // Di chuyển item
             MoveItemToSpot(item, targetSpot, () => HandleItemReachedSpot(item, false));
         }
 
-        // Cuối cùng, khi đã đẩy tất cả các món đồ sang phải hết mức có thể, thì đặt món đồ mới vào vị trí lý tưởng ban đầu
+        // Cuối cùng đặt item mới vào vị trí lý tưởng
         MoveItemToSpot(itemToPlace, idealSpot, () => HandleItemReachedSpot(itemToPlace));
     }
 
     // Di chuyển item đến vị trí trống đầu tiên
     private void MoveItemToFirstFreeSpot(Item item)
     {
+        // Tìm ô trống đầu tiên
         ItemSpot targetSpot = GetFreeSpot();
 
         if (targetSpot == null)
@@ -290,8 +311,10 @@ public class ItemSpotsManager : MonoBehaviour
             return;
         }
 
+        // Tạo data mới cho loại item này
         CreateItemMergeData(item);
 
+        // Di chuyển item vào ô
         MoveItemToSpot(item, targetSpot, () => HandleFirstItemReachedSpot(item));
     }
 
@@ -318,6 +341,7 @@ public class ItemSpotsManager : MonoBehaviour
 
     private void CreateItemMergeData(Item item)
     {
+        // Thêm entry mới vào Dictionary
         itemMergeDataDictionary.Add(item.ItemName, new ItemMergeData(item));
     }
 
@@ -326,7 +350,7 @@ public class ItemSpotsManager : MonoBehaviour
     {
         for (int i = 0; i < spots.Length; i++)
         {
-            if (spots[i].IsEmplty())
+            if (spots[i].IsEmpty())
             {
                 return spots[i];
             }
@@ -336,9 +360,10 @@ public class ItemSpotsManager : MonoBehaviour
 
     private void StoreSpots()
     {
-        // Đếm số lượng con của 'itemSpotsParent' để tạo mảng
+        // Đếm số con của parent
         spots = new ItemSpot[itemSpotsParent.childCount];
-        // Lấy Component ItemSpot của từng ô con và lưu lại
+
+        // Lưu component ItemSpot của từng con
         for (int i = 0; i < itemSpotsParent.childCount; i++)
         {
             spots[i] = itemSpotsParent.GetChild(i).GetComponent<ItemSpot>();
@@ -350,7 +375,7 @@ public class ItemSpotsManager : MonoBehaviour
         // Duyệt qua mảng spots, nếu có một ô nào đó trống, trả về true
         for (int i = 0; i < spots.Length; i++)
         {
-            if (spots[i].IsEmplty())
+            if (spots[i].IsEmpty())
             {
                 return true;
             }

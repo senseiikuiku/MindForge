@@ -27,36 +27,35 @@ public class InputManager : MonoBehaviour
 
     private void HandleDrag()
     {
-        // Bắn một tia ray từ camera đến vị trí chuột và kiểm tra xem nó có va chạm với bất kỳ collider nào không
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, 100))
+        // Bắn tia từ camera qua vị trí chuột
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition),
+                            out RaycastHit hit, 100))
         {
+            // Kiểm tra null
             if (hit.collider == null)
             {
                 DeselectCurrentItem();
-
                 return;
             }
 
+            // Kiểm tra có parent không (vì Item component ở parent)
             if (hit.collider.transform.parent == null)
             {
                 DeselectCurrentItem();
-                Debug.Log("Hit object does not have a parent.");
                 return;
             }
 
-            // Kiểm tra nếu collider của đối tượng va chạm có một component Item trong parent của nó
+            // Kiểm tra parent có component Item không
             if (!hit.collider.transform.parent.TryGetComponent(out Item item))
             {
                 DeselectCurrentItem();
-                Debug.Log("Hit object does not have an Item component.");
                 return;
             }
 
-            DeselectCurrentItem();
-
-            currentItem = item;
-
-            currentItem.Select(outlineMaterial);
+            // Lưu item và highlight
+            DeselectCurrentItem();// Bỏ chọn item cũ
+            currentItem = item;// Lưu item mới
+            currentItem.Select(outlineMaterial);// Thêm outline
         }
     }
 
@@ -72,15 +71,10 @@ public class InputManager : MonoBehaviour
 
     private void HandleMouseUp()
     {
-        if (currentItem == null)
-            return;
+        if (currentItem == null) return;
 
-        currentItem.Deselect();
-
-        // Bắn sự kiện itemCliked với currentItem đã được gán trong quá trình kéo
-        itemCliked?.Invoke(currentItem);
-
-        // Sau khi đã xử lý xong, đặt currentItem về null để chuẩn bị cho lần click tiếp theo
-        currentItem = null;
+        currentItem.Deselect();           // Xóa outline
+        itemCliked?.Invoke(currentItem); // Bắn event cho ItemSpotsManager
+        currentItem = null;               // Reset
     }
 }

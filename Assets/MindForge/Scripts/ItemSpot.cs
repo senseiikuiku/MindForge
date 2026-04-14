@@ -9,21 +9,22 @@ public class ItemSpot : MonoBehaviour
 
 
     [Header("Settings")]
-    private Item item;
-    public Item Item => item; // Tham chiếu đến item hiện tại đang ở vị trí này, nếu có
+    private Item item; // Item hiện tại đang ở vị trí này
+    public Item Item => item;
 
 
     // Hàm này được gọi khi một item được đặt vào vị trí này
     public void Populate(Item item)
     {
-        this.item = item;
+        this.item = item; // Để vị trí biết item nào đang ở đây
 
-        // Đặt item làm con của ItemSpot để nó di chuyển cùng với ItemSpot
+        // Đặt item vào vị trí của ItemSpot
         item.transform.SetParent(itemParent);
 
         item.AssignSpot(this); // Gán ItemSpot cho item để item biết nó đang ở đâu
     }
 
+    // Hàm này được gọi khi một item được lấy ra khỏi vị trí này
     public void Clear()
     {
         item = null; // Xóa tham chiếu đến item
@@ -34,7 +35,8 @@ public class ItemSpot : MonoBehaviour
         animator.Play("Bump", 0, 0);
     }
 
-    public bool IsEmplty() => item == null;
+    // Hàm kiểm tra xem vị trí này trống hay có item nào đó đang ở đây
+    public bool IsEmpty() => item == null;
 
 
 }

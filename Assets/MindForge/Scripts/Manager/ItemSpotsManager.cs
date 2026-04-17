@@ -24,6 +24,7 @@ public class ItemSpotsManager : MonoBehaviour
 
     [Header("Actions")]
     public static Action<List<Item>> mergeStarted;
+    public static Action<Item> itemPickedUp;
 
 
     private void Awake()
@@ -55,6 +56,9 @@ public class ItemSpotsManager : MonoBehaviour
 
         // 3. Khóa lại và xử lý
         isBusy = true;
+
+        itemPickedUp?.Invoke(item);
+
         HandleItemClicked(item);
     }
 
@@ -185,76 +189,76 @@ public class ItemSpotsManager : MonoBehaviour
         MoveAllItemsToTheLeft(HandleAllItemsMovedToTheLeft);
     }
 
-    private void MoveAllItemsToTheLeft(Action completeCallback)
-    {
-        // Duyệt từ index 3 đến hết
-        for (int i = 3; i < spots.Length; i++)
-        {
-            ItemSpot spot = spots[i];
-
-            if (spot.IsEmpty()) continue;
-
-            Item item = spot.Item;
-            ItemSpot targetSpot = spots[i - 3];  // Đẩy sang trái 3 ô
-
-            // Nếu ô bên trái đã có item khác → Lỗi logic
-            if (!targetSpot.IsEmpty())
-            {
-                Debug.LogWarning($"{targetSpot.name} is Full");
-                isBusy = false;
-                return;
-            }
-
-            // Xóa khỏi ô hiện tại
-            spot.Clear();
-
-            // ⚠️ BUG: completeCallback bị gọi nhiều lần!
-            completeCallback += () => HandleItemReachedSpot(item, false);
-
-            // Di chuyển item
-            MoveItemToSpot(item, targetSpot, completeCallback);
-        }
-    }
-
     //private void MoveAllItemsToTheLeft(Action completeCallback)
     //{
-    //    int itemsToMove = 0;
-    //    int itemsMoved = 0;
-
-    //    // Đếm số items cần di chuyển
-    //    for (int i = 3; i < spots.Length; i++)
-    //    {
-    //        if (!spots[i].IsEmpty()) itemsToMove++;
-    //    }
-
+    //    // Duyệt từ index 3 đến hết
     //    for (int i = 3; i < spots.Length; i++)
     //    {
     //        ItemSpot spot = spots[i];
+
     //        if (spot.IsEmpty()) continue;
 
     //        Item item = spot.Item;
-    //        ItemSpot targetSpot = spots[i - 3];
+    //        ItemSpot targetSpot = spots[i - 3];  // Đẩy sang trái 3 ô
+
+    //        // Nếu ô bên trái đã có item khác → Lỗi logic
+    //        if (!targetSpot.IsEmpty())
+    //        {
+    //            Debug.LogWarning($"{targetSpot.name} is Full");
+    //            isBusy = false;
+    //            return;
+    //        }
+
+    //        // Xóa khỏi ô hiện tại
     //        spot.Clear();
 
-    //        MoveItemToSpot(item, targetSpot, () =>
-    //        {
-    //            HandleItemReachedSpot(item, false);
-    //            itemsMoved++;
+    //        // ⚠️ BUG: completeCallback bị gọi nhiều lần!
+    //        completeCallback += () => HandleItemReachedSpot(item, false);
 
-    //            // Chỉ gọi callback khi tất cả items đã di chuyển xong
-    //            if (itemsMoved == itemsToMove)
-    //            {
-    //                completeCallback?.Invoke();
-    //            }
-    //        });
-    //    }
-
-    //    // Nếu không có item nào cần di chuyển
-    //    if (itemsToMove == 0)
-    //    {
-    //        completeCallback?.Invoke();
+    //        // Di chuyển item
+    //        MoveItemToSpot(item, targetSpot, completeCallback);
     //    }
     //}
+
+    private void MoveAllItemsToTheLeft(Action completeCallback)
+    {
+        int itemsToMove = 0;
+        int itemsMoved = 0;
+
+        // Đếm số items cần di chuyển
+        for (int i = 3; i < spots.Length; i++)
+        {
+            if (!spots[i].IsEmpty()) itemsToMove++;
+        }
+
+        for (int i = 3; i < spots.Length; i++)
+        {
+            ItemSpot spot = spots[i];
+            if (spot.IsEmpty()) continue;
+
+            Item item = spot.Item;
+            ItemSpot targetSpot = spots[i - 3];
+            spot.Clear();
+
+            MoveItemToSpot(item, targetSpot, () =>
+            {
+                HandleItemReachedSpot(item, false);
+                itemsMoved++;
+
+                // Chỉ gọi callback khi tất cả items đã di chuyển xong
+                if (itemsMoved == itemsToMove)
+                {
+                    completeCallback?.Invoke();
+                }
+            });
+        }
+
+        // Nếu không có item nào cần di chuyển
+        if (itemsToMove == 0)
+        {
+            completeCallback?.Invoke();
+        }
+    }
 
     private void HandleAllItemsMovedToTheLeft()
     {

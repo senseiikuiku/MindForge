@@ -2,8 +2,8 @@ using UnityEngine;
 
 public enum EItemName
 {
-    Cube = 0,
-    Sphere = 1,
-    Cylinder = 2,
-    Capsule = 3,
+    Diamondo = 0,
+    Heart = 1,
+    Boomb = 2,
+    BluePotion = 3,
 }

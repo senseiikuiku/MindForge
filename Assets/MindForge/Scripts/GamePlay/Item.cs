@@ -11,6 +11,9 @@ public class Item : MonoBehaviour
     private ItemSpot spot; // Item này đang ở vị trí nào
     public ItemSpot Spot => spot;
 
+    [SerializeField] private Sprite icon;
+    public Sprite Icon => icon;
+
     [Header("Elements")]
     [SerializeField] private Renderer renderer;
     [SerializeField] private Collider collider;
@@ -46,5 +49,11 @@ public class Item : MonoBehaviour
     public void Deselect()
     {
         renderer.materials = new Material[] { baseMaterial };
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, 0.02f);
     }
 }

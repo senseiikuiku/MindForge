@@ -41,7 +41,7 @@ public class GoalManager : MonoBehaviour
     private void GenerateGoalCard(ItemLevelData goal)
     {
         GoalCard cardInstance = Instantiate(goalCardPrefab, goalCardParent);
-        cardInstance.Configure(goal.amount);
+        cardInstance.Configure(goal.amount, goal.itemPrefab.Icon);
 
         goalCards.Add(cardInstance);
     }

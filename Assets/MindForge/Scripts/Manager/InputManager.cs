@@ -5,16 +5,31 @@ using static UnityEditor.Progress;
 public class InputManager : MonoBehaviour
 {
     public static Action<Item> itemCliked;
+    public static Action<Powerup> powerupClicked;
 
     [Header("Settings")]
     [SerializeField] private Material outlineMaterial;
+    [SerializeField] private LayerMask powerupLayer;
     private Item currentItem;
 
 
     private void Update()
     {
+        if (GameManager.Instance.IsGame())
+        {
+            HandleControl();
+        }
+    }
+
+    private void HandleControl()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            HandleMouseDown();
+        }
+
         // Kiểm tra nếu người dùng đang giữ chuột trái
-        if (Input.GetMouseButton(0))
+        else if (Input.GetMouseButton(0))
         {
             HandleDrag();
         }
@@ -23,6 +38,17 @@ public class InputManager : MonoBehaviour
         {
             HandleMouseUp();
         }
+    }
+
+    private void HandleMouseDown()
+    {
+        Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition),
+                            out RaycastHit hit, 100, powerupLayer);
+
+        if (hit.collider == null)
+            return;
+
+        powerupClicked?.Invoke(hit.collider.GetComponent<Powerup>()); // Bắn event cho PowerupManager
     }
 
     private void HandleDrag()

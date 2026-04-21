@@ -1,9 +1,11 @@
-using System;
+﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
 
 public class GoalManager : MonoBehaviour
 {
+    public static GoalManager Instance { get; private set; }
+
     [Header("Elements")]
     [SerializeField] private Transform goalCardParent;
     [SerializeField] private GoalCard goalCardPrefab;
@@ -12,22 +14,42 @@ public class GoalManager : MonoBehaviour
     private ItemLevelData[] goals;
     private List<GoalCard> goalCards = new List<GoalCard>();
 
+    public ItemLevelData[] Goals => goals;
+
     private void Awake()
     {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+
         LevelManager.levelSpawned += OnLevelSpawned;
         ItemSpotsManager.itemPickedUp += OnItemPickedUp;
+        PowerupManager.itemPickedUp += OnItemPickedUp;
     }
 
     private void OnDestroy()
     {
         LevelManager.levelSpawned -= OnLevelSpawned;
+        ItemSpotsManager.itemPickedUp -= OnItemPickedUp;
+        PowerupManager.itemPickedUp -= OnItemPickedUp;
     }
 
     private void OnLevelSpawned(Level level)
     {
         goals = level.GetGoals();
 
+        ClearGoalCards(); // Xóa cards cũ trước
         GenerateGoalCards();
+    }
+
+    private void ClearGoalCards()
+    {
+        foreach (GoalCard card in goalCards)
+        {
+            Destroy(card.gameObject);
+        }
+        goalCards.Clear();
     }
 
     private void GenerateGoalCards()
@@ -49,10 +71,14 @@ public class GoalManager : MonoBehaviour
     private void OnItemPickedUp(Item item)
     {
         Debug.Log($"Item Picked Up: {item.ItemName}");
-        for (int i = 0; i <= goals.Length; i++)
+
+        for (int i = 0; i < goals.Length; i++)
         {
             if (!goals[i].itemPrefab.ItemName.Equals(item.ItemName))
+            {
+                Debug.Log($"Item {item.ItemName} does not match goal {goals[i].itemPrefab.ItemName}");
                 continue;
+            }
 
             goals[i].amount--;
 
@@ -81,6 +107,7 @@ public class GoalManager : MonoBehaviour
                 return;
         }
 
-        Debug.Log("Level Complete!");
+        GameManager.Instance.SetGameState(EGameState.LEVELCOMPLETE);
+        //Debug.Log("Level Complete!");
     }
 }

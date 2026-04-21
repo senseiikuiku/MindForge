@@ -334,7 +334,7 @@ public class ItemSpotsManager : MonoBehaviour
         // Nếu không còn ô nào trống -> Thua cuộc
         if (GetFreeSpot() == null)
         {
-            Debug.Log("Game Over!");
+            GameManager.Instance.SetGameState(EGameState.GAMEOVER);
         }
         else
         {

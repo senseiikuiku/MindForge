@@ -21,6 +21,11 @@ public struct ItemMergeData
         Debug.Log($"full items {items.Count}");
     }
 
+    public void Remove(Item item)
+    {
+        items.Remove(item);
+    }
+
     // Kiểm tra xem có đủ 3 item để merge không
     public bool CanMergeItems()
     {

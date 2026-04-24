@@ -12,6 +12,9 @@ public class GoalCard : MonoBehaviour
     [SerializeField] private GameObject backFace;
     [SerializeField] private Animator animator;
 
+    [Header(" Actions ")]
+    public static Action complete;
+
     private void Start()
     {
         animator.enabled = false; // Vô hiệu hóa animator để tránh chạy animation khi khởi tạo

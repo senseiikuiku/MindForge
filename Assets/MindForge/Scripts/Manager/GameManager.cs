@@ -56,6 +56,12 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(0);
     }
 
+    public void ResetGame()
+    {
+        LevelManager.Instance.ResetData();
+        SceneManager.LoadScene(0);
+    }
+
     public bool IsGame() => gameState == EGameState.GAME;
 
 }

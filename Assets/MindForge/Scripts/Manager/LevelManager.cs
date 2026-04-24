@@ -1,4 +1,5 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 
 public class LevelManager : MonoBehaviour, IGameStateListener
@@ -10,9 +11,14 @@ public class LevelManager : MonoBehaviour, IGameStateListener
     private const string levelKey = "LevelReached"; // Key để lưu trữ level đã đạt được trong PlayerPrefs
     private int levelIndex;
     public Item[] Items => currentLevel.GetItems();
+    public Transform ItemParent => currentLevel.ItemParent;
+
 
     [Header("Settings")]
     private Level currentLevel;
+
+    [Header("Elements")]
+    [SerializeField] private TextMeshProUGUI levelText;
 
 
     [Header("Action")]
@@ -46,12 +52,23 @@ public class LevelManager : MonoBehaviour, IGameStateListener
     private void LoadData()
     {
         levelIndex = PlayerPrefs.GetInt(levelKey);
-
     }
 
     private void SaveData()
     {
         PlayerPrefs.SetInt(levelKey, levelIndex);
+    }
+
+    public void ResetData()
+    {
+        levelIndex = 0;
+        SaveData();
+        UpdateLevelText();
+    }
+
+    private void UpdateLevelText()
+    {
+        levelText.text = $"Level {levelIndex + 1}";
     }
 
     // Hàm xử lý khi người chơi hoàn thành một level
@@ -64,5 +81,6 @@ public class LevelManager : MonoBehaviour, IGameStateListener
             levelIndex++; // Tăng levelIndex khi hoàn thành level
             SaveData();
         }
+        UpdateLevelText();
     }
 }

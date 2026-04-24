@@ -42,13 +42,24 @@ public class InputManager : MonoBehaviour
 
     private void HandleMouseDown()
     {
-        Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition),
-                            out RaycastHit hit, 100, powerupLayer);
+        // Nếu không có item nào đang được chọn, kiểm tra xem có click vào powerup không
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition),
+                            out RaycastHit hit, 100, powerupLayer))
+            return;
 
         if (hit.collider == null)
             return;
 
-        powerupClicked?.Invoke(hit.collider.GetComponent<Powerup>()); // Bắn event cho PowerupManager
+        // Kiểm tra xem collider có component Powerup không
+        Powerup powerup = hit.collider.GetComponent<Powerup>();
+
+        if (powerup == null)
+        {
+            Debug.LogWarning($"⚠️ Object '{hit.collider.name}' có layer Powerup nhưng không có Powerup component!");
+            return;
+        }
+
+        powerupClicked?.Invoke(powerup); // Bắn event cho PowerupManager
     }
 
     private void HandleDrag()

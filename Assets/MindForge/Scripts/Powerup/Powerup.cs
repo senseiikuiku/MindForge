@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public enum EPowerupType
@@ -21,6 +21,18 @@ public abstract class Powerup : MonoBehaviour
     [SerializeField] private TextMeshPro amountText;
     [SerializeField] private GameObject videoIcon;
 
+    private Collider powerupCollider;
+
+    protected virtual void Awake()
+    {
+        powerupCollider = GetComponent<Collider>();
+
+        if (powerupCollider == null)
+        {
+            Debug.LogWarning($"⚠️ {name} không có Collider! Powerup sẽ không thể click được.");
+        }
+    }
+
     public void UpdateVisuals(int amount)
     {
         videoIcon.SetActive(amount <= 0);
@@ -29,4 +41,11 @@ public abstract class Powerup : MonoBehaviour
         amountText.text = amount.ToString();
     }
 
+    public void SetInteractable(bool interactable)
+    {
+        if (powerupCollider != null)
+        {
+            powerupCollider.enabled = interactable;
+        }
+    }
 }

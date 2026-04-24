@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class ItemSpotsManager : MonoBehaviour
 {
+    public static ItemSpotsManager Instance { get; private set; }
+
     [Header("Elements")]
     [SerializeField] private Transform itemSpotsParent;
     private ItemSpot[] spots;// Mảng lưu trữ danh sách các ô cụ thể
@@ -24,18 +27,42 @@ public class ItemSpotsManager : MonoBehaviour
 
     [Header("Actions")]
     public static Action<List<Item>> mergeStarted;
+    public static Action itemPlaced;
     public static Action<Item> itemPickedUp;
 
 
     private void Awake()
     {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+
         InputManager.itemCliked += OnItemClicked;
+        PowerupManager.itemBackToGame += OnItemBackToGame;
+
         StoreSpots();
     }
 
     private void OnDestroy()
     {
         InputManager.itemCliked -= OnItemClicked;
+        PowerupManager.itemBackToGame -= OnItemBackToGame;
+    }
+
+    private void OnItemBackToGame(Item releaseItem)
+    {
+        if (!itemMergeDataDictionary.ContainsKey(releaseItem.ItemName))
+            return;
+
+        // Xóa item này khỏi Dictionary
+        itemMergeDataDictionary[releaseItem.ItemName].Remove(releaseItem);
+
+        // Nếu sau khi xóa mà không còn item nào cùng loại trên khay nữa thì xóa luôn entry đó khỏi Dictionary
+        if (itemMergeDataDictionary[releaseItem.ItemName].items.Count <= 0)
+        {
+            itemMergeDataDictionary.Remove(releaseItem.ItemName);
+        }
     }
 
     private void OnItemClicked(Item item)
@@ -385,5 +412,26 @@ public class ItemSpotsManager : MonoBehaviour
             }
         }
         return false;
+    }
+
+    // Hàm xử lý lấy ngẫu nhiên một ô đang có item nào đó trên khay, dùng để làm hiệu ứng khi gộp item
+    public ItemSpot GetRandomOccupiedSpot()
+    {
+        List<ItemSpot> occupiedSpots = new List<ItemSpot>();
+
+        for (int i = 0; i < spots.Length; i++)
+        {
+            if (spots[i].IsEmpty())
+                continue;
+
+            occupiedSpots.Add(spots[i]);
+        }
+
+        if (occupiedSpots.Count <= 0)
+        {
+            return null; // Không có ô nào có item
+        }
+
+        return occupiedSpots[Random.Range(0, occupiedSpots.Count)];
     }
 }

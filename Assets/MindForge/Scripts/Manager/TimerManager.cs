@@ -4,12 +4,19 @@ using System;
 
 public class TimerManager : MonoBehaviour, IGameStateListener
 {
+    public static TimerManager Instance { get; private set; }
+
     [Header("Elements")]
     [SerializeField] private TextMeshProUGUI timerText;
     private int currentTimer;
 
     private void Awake()
     {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+
         LevelManager.levelSpawned += OnLevelSpawned;
     }
 
@@ -29,6 +36,7 @@ public class TimerManager : MonoBehaviour, IGameStateListener
 
     private void StartTimer()
     {
+        timerText.color = Color.white; // Đảm bảo màu timer là trắng khi bắt đầu
         InvokeRepeating("UpdateTimer", 0, 1); // Gọi hàm UpdateTimer mỗi giây
     }
 
@@ -68,7 +76,17 @@ public class TimerManager : MonoBehaviour, IGameStateListener
 
     private void StopTimer()
     {
-        CancelInvoke("UpdateTimer");
+        //CancelInvoke("UpdateTimer");
+        CancelInvoke();
+    }
+
+    public void FreezeTimer()
+    {
+        StopTimer();
+
+        timerText.color = Color.red; // Đổi màu timer thành đỏ để biểu thị trạng thái đóng băng
+
+        Invoke("StartTimer", 10); // Đóng băng timer trong 10 giây trước khi tiếp tục
     }
 }
 
